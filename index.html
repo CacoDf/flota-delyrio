@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Flota Delyrio</title>
+<meta name="theme-color" content="#1f4e79">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: tablero de patio — resumen arriba, "atención" al centro, flota completa abajo como placas */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#14202e; --muted:#5b6878; --line:#dde3ea;
+  --accent:#1f4e79; --accent-soft:#e3ecf5;
+  --ok:#157347; --ok-bg:#e2f4ea; --warn:#a15c07; --warn-bg:#fdf0d8; --bad:#b42318; --bad-bg:#fde4e2;
+  --none:#5b6878; --none-bg:#eceff3;
+  --plate:#fbfbf7; --plate-ink:#111; --plate-edge:#222;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151d; --surface:#17202b; --ink:#e7edf4; --muted:#9aa8b8; --line:#283544;
+  --accent:#8ab8e6; --accent-soft:#1d2c3c;
+  --ok:#5fd393; --ok-bg:#12301f; --warn:#f2b453; --warn-bg:#36280f; --bad:#ff8a80; --bad-bg:#3a1714;
+  --none:#9aa8b8; --none-bg:#222c38;
+  --plate:#e9e9e3; --plate-ink:#111; --plate-edge:#000; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151d; --surface:#17202b; --ink:#e7edf4; --muted:#9aa8b8; --line:#283544;
+  --accent:#8ab8e6; --accent-soft:#1d2c3c;
+  --ok:#5fd393; --ok-bg:#12301f; --warn:#f2b453; --warn-bg:#36280f; --bad:#ff8a80; --bad-bg:#3a1714;
+  --none:#9aa8b8; --none-bg:#222c38;
+  --plate:#e9e9e3; --plate-ink:#111; --plate-edge:#000; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+[hidden]{display:none!important}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:calc(20px + env(safe-area-inset-top)) 48px;display:grid;gap:28px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,5vw,40px);letter-spacing:.01em;margin:0;line-height:1;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px;margin:6px 0 0}
+.stamp{font-size:13px;color:var(--muted);text-align:right;display:grid;gap:8px;justify-items:end}
+.stamp b{color:var(--ink);font-weight:600}
+.offline{color:var(--warn);font-weight:600}
+.acts{display:flex;gap:6px}
+.btn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:default}
+h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 10px;letter-spacing:.01em}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+
+/* Resumen */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:2px;border-top:4px solid var(--c)}
+.kpi .n{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1;color:var(--c)}
+.kpi .t{font-weight:600}
+.kpi .d{font-size:13px;color:var(--muted)}
+.k-ok{--c:var(--ok)} .k-warn{--c:var(--warn)} .k-bad{--c:var(--bad)}
+.docsum{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin-top:10px}
+.docsum b{color:var(--ink);font-weight:600}
+
+/* Placa patente chilena */
+.plate{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;background:var(--plate);color:var(--plate-ink);
+  border:2px solid var(--plate-edge);border-radius:6px;padding:1px 6px 2px;width:98px;line-height:1;flex:none}
+.plate small{font-family:var(--f-body);font-size:7px;letter-spacing:.3em;font-weight:600;margin-bottom:1px}
+.plate span{font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:.06em;white-space:nowrap}
+.plate span i{font-style:normal;display:inline-block;width:.35em}
+
+/* Atención */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 14px;padding:10px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .what{min-width:0}
+.row .doc{font-weight:600}
+.row .when{font-size:13px;color:var(--muted)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--b);color:var(--c);white-space:nowrap}
+.s-ok{--c:var(--ok);--b:var(--ok-bg)} .s-warn{--c:var(--warn);--b:var(--warn-bg)} .s-bad{--c:var(--bad);--b:var(--bad-bg)} .s-none{--c:var(--none);--b:var(--none-bg)} .s-soon{--c:var(--accent);--b:var(--accent-soft)}
+.right{display:flex;align-items:center;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+a.pdf{color:var(--accent);font-weight:600;font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:4px 9px;white-space:nowrap}
+a.pdf:hover{background:var(--accent-soft)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.empty{padding:18px 14px;color:var(--muted)}
+
+/* Flota */
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.tools input{flex:1 1 200px;min-width:0;font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:8px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.fleet{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.car{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px}
+.car .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.car .meta{font-size:12px;color:var(--muted);text-align:right}
+.docs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+a.d,div.d{display:grid;gap:1px;padding:7px 8px;border-radius:7px;background:var(--b);color:var(--c);text-decoration:none;min-width:0}
+a.d:hover{filter:brightness(.97)}
+.d .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;opacity:.85}
+.d .v{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.d .x{font-size:11px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;background:var(--c);display:inline-block}
+footer{font-size:12px;color:var(--muted)}
+
+/* Pantalla de clave */
+.lock{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px}
+.lock form{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px 20px;display:grid;gap:14px;text-align:center}
+.lock .plate{margin:0 auto;width:132px}
+.lock .plate span{font-size:28px}
+.lock .plate small{font-size:9px}
+.lock h1{font-size:32px}
+.lock p{margin:0;color:var(--muted);font-size:14px}
+.lock input[type=password]{font:inherit;font-size:17px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);width:100%}
+.lock label{display:flex;gap:8px;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
+.lock button{font:inherit;font-size:16px;font-weight:600;border:0;border-radius:9px;padding:12px;background:var(--accent);color:var(--surface);cursor:pointer}
+.lock button:disabled{opacity:.7}
+.lock .err{color:var(--bad);font-weight:600;min-height:1.4em}
+
+@media (max-width:560px){
+  .kpis{grid-template-columns:1fr}
+  .kpi{grid-template-columns:auto 1fr;align-items:center;column-gap:14px}
+  .kpi .n{grid-row:span 2;font-size:38px}
+  .row{grid-template-columns:auto 1fr}
+  .row .right{grid-column:1/-1;justify-content:flex-start}
+  .stamp{text-align:left;justify-items:start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <form id="f-clave" autocomplete="on">
+    <span class="plate" aria-hidden="true"><small>CHILE</small><span>FLOTA</span></span>
+    <h1>Flota Delyrio</h1>
+    <p>Ingresa la clave para ver el estado de los documentos.</p>
+    <input id="clave" type="password" name="password" autocomplete="current-password" placeholder="Clave" aria-label="Clave" required>
+    <label><input id="recordar" type="checkbox" checked> Recordar en este celular</label>
+    <button id="entrar" type="submit">Entrar</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <div>
+      <h1>Documentos de la flota</h1>
+      <p class="sub">Carros de arrastre Delyrio · revisión técnica, SOAP y permiso de circulación</p>
+    </div>
+    <div class="stamp">
+      <div>Estado al <b id="hoy"></b><br>Datos actualizados el <span id="upd"></span><span id="offline" class="offline" hidden><br>Sin conexión: mostrando lo último guardado</span></div>
+      <div class="acts"><button class="btn" id="refrescar" type="button">Actualizar</button><button class="btn" id="salir" type="button">Cerrar sesión</button></div>
+    </div>
+  </header>
+
+  <section aria-labelledby="t-res">
+    <h2 id="t-res" class="label" style="font-family:var(--f-body);font-size:12px">Resumen por carro</h2>
+    <div class="kpis">
+      <div class="kpi k-ok"><span class="n num" id="k-ok">0</span><span class="t">Al día</span><span class="d">Los 3 documentos vigentes</span></div>
+      <div class="kpi k-warn"><span class="n num" id="k-warn">0</span><span class="t">Por vencer</span><span class="d">Algo vence en 30 días o menos</span></div>
+      <div class="kpi k-bad"><span class="n num" id="k-bad">0</span><span class="t">Vencidos o sin documento</span><span class="d">No deberían circular</span></div>
+    </div>
+    <div class="docsum" id="docsum"></div>
+  </section>
+
+  <section aria-labelledby="t-at">
+    <h2 id="t-at">Requiere atención</h2>
+    <div class="list" id="atencion"></div>
+  </section>
+
+  <section aria-labelledby="t-fl">
+    <h2 id="t-fl">Toda la flota</h2>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Buscar patente, ej. PAW 587" aria-label="Buscar patente">
+      <div class="seg" role="group" aria-label="Filtro">
+        <button id="f-all" aria-pressed="true">Todos</button>
+        <button id="f-alert" aria-pressed="false">Con alerta</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="s-ok"><i></i>Vigente</span><span class="s-soon"><i></i>Vence en 31–60 días</span>
+      <span class="s-warn"><i></i>Vence en 30 días o menos</span><span class="s-bad"><i></i>Vencido</span><span class="s-none"><i></i>Sin documento</span>
+    </div>
+    <div class="fleet" id="fleet" style="margin-top:10px"></div>
+  </section>
+
+  <footer>Toca un documento para abrir el PDF en Google Drive. La revisión técnica vence el último día del mes indicado en el certificado; SOAP y permiso vencen el 31 de marzo.</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const DOCS=[["rt","Rev. técnica"],["soap","SOAP"],["pc","Permiso"]];
+const MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const KEY="flota_clave";
+let today, cars=[], filtro="all", clave=null, cargado=0;
+
+// ---------- almacenamiento local (puede fallar en modo incógnito)
+const guardada=()=>{try{return localStorage.getItem(KEY)}catch(e){return null}};
+const guardar=v=>{try{v?localStorage.setItem(KEY,v):localStorage.removeItem(KEY)}catch(e){}};
+
+// ---------- descifrado: PBKDF2-SHA256 -> AES-GCM 256
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function descifrar(enc,pass){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(enc.salt),iterations:enc.iter,hash:"SHA-256"},
+    base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(enc.iv)},key,b64(enc.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function cargar(pass){
+  let r;
+  try{r=await fetch("data.enc.json",{cache:"no-store"})}catch(e){throw new Error("red")}
+  if(!r.ok)throw new Error("red");
+  const enc=await r.json();
+  let data;
+  try{data=await descifrar(enc,pass)}catch(e){throw new Error("clave")}
+  return {data,offline:r.headers.get("X-Desde-Cache")==="1"};
+}
+
+// ---------- render (mismo panel de siempre)
+const parse=s=>{if(!s)return null;const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const fmt=d=>`${String(d.getDate()).padStart(2,"0")} ${MES[d.getMonth()]} ${d.getFullYear()}`;
+const days=d=>Math.round((d-today)/864e5);
+function st(doc){
+  if(!doc||!doc.hasta) return {k:"none",txt:"Sin documento",rank:0};
+  const d=parse(doc.hasta), n=days(d);
+  if(n<0) return {k:"bad",txt:`Vencido hace ${-n} día${n===-1?"":"s"}`,n,d,rank:1};
+  if(n<=30) return {k:"warn",txt:n===0?"Vence hoy":`Vence en ${n} día${n===1?"":"s"}`,n,d,rank:2};
+  if(n<=60) return {k:"soon",txt:`Vence en ${n} días`,n,d,rank:3};
+  return {k:"ok",txt:"Vigente",n,d,rank:4};
+}
+const plate=p=>{const[a,b]=p.split(" ");return `<span class="plate" aria-label="Patente ${p}"><small>CHILE</small><span>${a}<i></i>${b||""}</span></span>`};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const url=u=>/^https:\/\/drive\.google\.com\//.test(u||"")?esc(u):"";
+
+function render(DATA,offline){
+  today=new Date(); today.setHours(0,0,0,0); cargado=Date.now();
+  $("hoy").textContent=fmt(today);
+  const u=DATA.actualizado?DATA.actualizado.split(" "):null;
+  $("upd").textContent=u?`${fmt(parse(u[0]))}, ${u[1]}`:"—";
+  $("offline").hidden=!offline;
+
+  cars=DATA.carros.map(c=>{const s={};let worst=4;for(const[k]of DOCS){s[k]=st(c[k]);worst=Math.min(worst,s[k].rank)}return{...c,s,worst}});
+  const cnt={ok:0,warn:0,bad:0};
+  cars.forEach(c=>{if(c.worst<=1)cnt.bad++;else if(c.worst===2)cnt.warn++;else cnt.ok++});
+  for(const k in cnt)$("k-"+k).textContent=cnt[k];
+  $("docsum").innerHTML=DOCS.map(([k,l])=>{
+    const v=cars.filter(c=>c.s[k].rank>=3).length;return `<span>${l}: <b class="num">${v}/${cars.length}</b> vigentes</span>`}).join("");
+
+  // Atención: vencidos, sin documento y lo que vence en 60 días
+  const at=[];
+  cars.forEach(c=>DOCS.forEach(([k,l])=>{const s=c.s[k];if(s.rank<=3)at.push({c,k,l,s})}));
+  at.sort((a,b)=>((a.s.d?+a.s.d:0)-(b.s.d?+b.s.d:0))||a.c.patente.localeCompare(b.c.patente));
+  $("atencion").innerHTML=at.length?at.map(({c,k,l,s})=>{
+    const doc=c[k];const extra=doc&&doc.nota?` · ${esc(doc.nota)}`:"";const h=doc&&url(doc.url);
+    return `<div class="row">${plate(c.patente)}<div class="what"><div class="doc">${l}</div><div class="when">${s.d?"Vence el "+fmt(s.d):"No hay documento cargado"}${extra}</div></div>
+    <div class="right"><span class="chip s-${s.k}">${s.txt}</span>${h?`<a class="pdf" href="${h}" target="_blank" rel="noopener">Ver PDF</a>`:""}</div></div>`}).join("")
+    :`<div class="empty">Todo al día: no hay documentos vencidos ni por vencer en los próximos 60 días.</div>`;
+  draw();
+}
+
+// Flota
+function detalle(k,doc){if(!doc)return"";if(k==="rt")return doc.planta||"";if(k==="soap")return doc.compania||"";return doc.muni||""}
+function draw(){
+  const q=$("q").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const list=cars.filter(c=>(!q||c.patente.replace(" ","").includes(q))&&(filtro==="all"||c.worst<=3));
+  $("fleet").innerHTML=list.length?list.map(c=>`<div class="car"><div class="top">${plate(c.patente)}<div class="meta">${esc(c.anio)}${c.anio?" · ":""}${esc(c.propietario)}</div></div>
+   <div class="docs">${DOCS.map(([k,l])=>{const s=c.s[k],doc=c[k],h=doc&&url(doc.url);const inner=`<span class="k">${l}</span><span class="v">${s.d?fmt(s.d).replace(/ (\d{4})$/," ’"+String(s.d.getFullYear()).slice(2)):"—"}</span><span class="x">${s.k==="ok"?esc(detalle(k,doc))||"Vigente":s.txt}</span>`;
+     return h?`<a class="d s-${s.k}" href="${h}" target="_blank" rel="noopener" title="Abrir PDF de ${l}">${inner}</a>`:`<div class="d s-${s.k}">${inner}</div>`}).join("")}</div></div>`).join("")
+   :`<div class="empty">No hay carros que coincidan con la búsqueda.</div>`;
+}
+$("q").addEventListener("input",draw);
+for(const[id,v]of[["f-all","all"],["f-alert","alert"]])$(id).addEventListener("click",()=>{filtro=v;
+  $("f-all").setAttribute("aria-pressed",v==="all");$("f-alert").setAttribute("aria-pressed",v==="alert");draw()});
+
+// ---------- flujo de clave
+function mostrarLock(msg){$("app").hidden=true;$("lock").hidden=false;$("err").textContent=msg||"";$("entrar").disabled=false;$("entrar").textContent="Entrar"}
+function mostrarApp(){$("lock").hidden=true;$("app").hidden=false}
+async function abrir(pass,recordar){
+  const {data,offline}=await cargar(pass);
+  clave=pass; if(recordar)guardar(pass);
+  render(data,offline); mostrarApp();
+}
+$("f-clave").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const pass=$("clave").value; if(!pass)return;
+  $("entrar").disabled=true;$("entrar").textContent="Abriendo…";$("err").textContent="";
+  try{await abrir(pass,$("recordar").checked);$("clave").value=""}
+  catch(err){mostrarLock(err.message==="clave"?"Clave incorrecta.":"No se pudieron descargar los datos. Revisa la conexión.")}
+});
+$("salir").addEventListener("click",()=>{guardar(null);clave=null;cars=[];$("fleet").innerHTML=$("atencion").innerHTML="";mostrarLock()});
+$("refrescar").addEventListener("click",async()=>{
+  const b=$("refrescar");b.disabled=true;b.textContent="Actualizando…";
+  try{const {data,offline}=await cargar(clave);render(data,offline)}
+  catch(err){if(err.message==="clave"){guardar(null);mostrarLock("La clave cambió. Ingresa la nueva.")}else $("offline").hidden=false}
+  b.disabled=false;b.textContent="Actualizar";
+});
+// al volver a la app otro día, recalcula los estados con la fecha de hoy
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible"||!clave||$("app").hidden)return;
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  if(+hoy!==+today||Date.now()-cargado>30*60e3)$("refrescar").click();
+});
+
+(async()=>{
+  const g=guardada();
+  if(!g)return mostrarLock();
+  $("entrar").disabled=true;$("entrar").textContent="Abriendo…";
+  try{await abrir(g,false)}
+  catch(err){if(err.message==="clave"){guardar(null);mostrarLock("La clave cambió. Ingresa la nueva.")}else mostrarLock("No se pudieron descargar los datos. Revisa la conexión.")}
+})();
+
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Nunca subir datos sin cifrar ni la clave
+panel_data.json
+clave*
+*.xlsx
